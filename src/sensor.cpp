@@ -14,7 +14,7 @@ bool has_scd30 = false;
 bool send_data(Measurement *m, pb_ostream_t *ostream, const pb_field_iter_t *field);
 bool write_readings(pb_ostream_t *ostream, const pb_field_iter_t *field, void *const *arg);
 
-uint8_t read_sensor(int packet_id, uint8_t *buffer, uint8_t buffer_size)
+uint8_t sensor_read(int packet_id, uint8_t *buffer, uint8_t buffer_size)
 {
     Meta META = {
         location_id : location_id,
@@ -84,7 +84,7 @@ bool send_data(Measurement *m, pb_ostream_t *ostream, const pb_field_iter_t *fie
            pb_encode_submessage(ostream, Measurement_fields, m);
 }
 
-bool init_scd30()
+bool sensor_init()
 {
     Wire.begin();
     if (scd30.begin() == true)

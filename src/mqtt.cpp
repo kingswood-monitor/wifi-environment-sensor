@@ -11,6 +11,12 @@
 #define MQTT_SERVER_IP IPAddress(192, 168, 1, 30)
 #define MQTT_MAX_TOPIC_LENGTH 50
 
+#define RED_LED_PIN 16
+#define BLUE_LED_PIN 2
+
+Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
+Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
+
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
@@ -19,19 +25,15 @@ char command_topic[MQTT_MAX_TOPIC_LENGTH];
 
 bool init_wifi();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
+bool read_data(pb_istream_t *stream, const pb_field_iter_t *field, void **arg);
+void publish_status(int location_id, const char *topic, const char *data);
+void publish_measurement_float(int location_id, int sensor_type, int sensor_id, const char *topic, float val);
 
-bool init_mqtt()
+bool mqtt_init()
 {
-    red_led.turnOn();
-
-    // init_wifi();
-    // mqttClient.setServer(MQTT_SERVER_IP, 1883);
-    // mqttClient.setCallback(mqtt_callback);
-
-    // sprintf(status_topic, "sensor/status/%d", location_id);
-    // sprintf(command_topic, "sensor/command/%d", location_id);
-    // reconnect_mqtt();
-    // return mqttClient.connected();
+    init_wifi();
+    mqttClient.setServer(MQTT_SERVER_IP, 1883);
+    mqttClient.setCallback(mqtt_callback);
 }
 
 bool init_wifi()
@@ -40,7 +42,10 @@ bool init_wifi()
     Serial.print(SSID_NAME);
     Serial.print("...");
 
+    blue_led.begin();
+    blue_led.activeLow();
     blue_led.turnOff();
+
     WiFi.begin(SSID_NAME, SSID_PASS);
 
     blue_led.blink(20, 200);
@@ -49,11 +54,16 @@ bool init_wifi()
 
     Serial.print(" IP: ");
     Serial.println(WiFi.localIP());
+
     blue_led.turnOn();
 }
 
 void reconnect_mqtt()
 {
+    blue_led.begin();
+    blue_led.activeLow();
+    blue_led.turnOff();
+
     // Loop until we're reconnected
     while (!mqttClient.connected())
     {
@@ -87,8 +97,11 @@ void loop_mqtt()
     mqttClient.loop();
 }
 
-void publish_measurement(uint8_t *buffer, uint8_t bytes_written)
+void mqtt_publish_measurement(uint8_t *buffer, uint8_t bytes_written)
 {
+    red_led.begin();
+    red_led.activeLow();
+
     Packet packet = Packet_init_zero;
 
     // Decode packet
@@ -99,6 +112,8 @@ void publish_measurement(uint8_t *buffer, uint8_t bytes_written)
         Serial.print("ERROR: Failed to decode measurement packet");
 
     publish_status(packet.meta.location_id, "firmware", packet.meta.firmware_version);
+
+    red_led.blink(1, 200);
 }
 
 bool read_data(pb_istream_t *stream, const pb_field_iter_t *field, void **arg)

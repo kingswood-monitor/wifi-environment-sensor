@@ -15,16 +15,16 @@
 
 void setup()
 {
-  if (!init_scd30())
+  if (!sensor_init())
   {
     Serial.println("ERROR: SCD30 not detected. Freezing...");
     while (1)
       ;
   }
-  if (!init_device())
+  if (!util_init_device())
     Serial.println("ERROR: Failed to initialise device");
 
-  if (!init_mqtt())
+  if (!mqtt_init())
     Serial.println("ERROR: Failed to initialise WiFi");
 }
 
@@ -33,12 +33,10 @@ uint8_t packet_buffer[255];
 
 void loop()
 {
-  blue_led.turnOn();
-  // // loop_mqtt();
+  loop_mqtt();
 
-  // uint8_t bytes_written = read_sensor(packet_id++, packet_buffer, 255);
-  // publish_measurement(packet_buffer, bytes_written);
+  uint8_t bytes_written = sensor_read(packet_id++, packet_buffer, 255);
+  mqtt_publish_measurement(packet_buffer, bytes_written);
 
-  // red_led.blink(1, 100);
-  // delay(refresh_millis);
+  delay(refresh_millis);
 }
