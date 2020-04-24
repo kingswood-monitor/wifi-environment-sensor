@@ -65,7 +65,7 @@ void display_logo(const char *title, const char *version, const char *type)
 
 void generate_chip_id()
 {
-    sprintf(chip_id, "%08X", ESP.getChipId());
+    sprintf(chip_id, "%08X\0", ESP.getChipId());
 }
 
 void identify(int number)
