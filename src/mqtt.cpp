@@ -17,8 +17,10 @@ char command_topic[MQTT_MAX_TOPIC_LENGTH];
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
-Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
-Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
+using namespace Kingswood::Pin;
+
+DigitalOut red_led = DigitalOut(RED_LED_PIN);
+DigitalOut blue_led = DigitalOut(BLUE_LED_PIN);
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 bool read_data(pb_istream_t *stream, const pb_field_iter_t *field, void **arg);
@@ -65,21 +67,26 @@ void loop_mqtt()
 void reconnect_mqtt()
 {
     // Loop until we're reconnected
+    blue_led.begin();
+    blue_led.activeLow();
     while (!mqttClient.connected())
     {
-        blue_led.begin();
-        blue_led.activeLow();
         blue_led.turnOff();
 
         Serial.print("INFO: Connecting MQTT...");
         // Attempt to connect
-        if (mqttClient.connect(chip_id))
+        char random_client_name[8] = {0};
+        rand_str(random_client_name, sizeof random_client_name - 1);
+        Serial.println(random_client_name);
+
+        if (mqttClient.connect(random_client_name))
         {
             Serial.println("connected");
             // Once connected, publish an announcement...
             mqttClient.publish(status_topic, "ONLINE");
             // ... and resubscribe
             mqttClient.subscribe(command_topic);
+            blue_led.turnOn();
         }
         else
         {
@@ -91,8 +98,6 @@ void reconnect_mqtt()
             blue_led.toggle();
         }
     }
-
-    blue_led.turnOn();
 }
 
 void mqtt_publish_measurement(uint8_t *buffer, uint8_t bytes_written)
