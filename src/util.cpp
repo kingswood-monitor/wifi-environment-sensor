@@ -5,6 +5,9 @@
 
 KWPreferences preferences;
 
+Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
+Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
+
 uint16_t refresh_millis = CFG_REFRESH_MILLIS;
 uint8_t location_id = CFG_LOCATION_ID;
 
@@ -38,6 +41,14 @@ bool util_init_device()
     Serial.begin(115200);
     delay(2000);
 
+    red_led.begin();
+    red_led.activeLow();
+    red_led.turnOff();
+
+    blue_led.begin();
+    blue_led.activeLow();
+    blue_led.turnOff();
+
     identify(location_id);
 
     get_set_config();
@@ -69,8 +80,6 @@ void generate_chip_id()
 void identify(int number)
 {
     Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
-    red_led.begin();
-    red_led.activeLow();
     red_led.turnOff();
     delay(1000);
     red_led.blink(number, 200);

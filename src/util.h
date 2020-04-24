@@ -4,6 +4,9 @@
 
 #include "config.h"
 
+extern Kingswood::Pin::DigitalOut red_led;
+extern Kingswood::Pin::DigitalOut blue_led;
+
 // ESP8266 chip ID
 extern char chip_id[8];
 

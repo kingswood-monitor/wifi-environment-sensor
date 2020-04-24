@@ -11,12 +11,6 @@
 #define MQTT_SERVER_IP IPAddress(192, 168, 1, 30)
 #define MQTT_MAX_TOPIC_LENGTH 50
 
-#define RED_LED_PIN 16
-#define BLUE_LED_PIN 2
-
-Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
-Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
-
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
