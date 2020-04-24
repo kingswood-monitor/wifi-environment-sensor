@@ -7,9 +7,6 @@
 // ESP8266 chip ID
 extern char chip_id[8];
 
-// LEDS
-extern Kingswood::Pin::DigitalOut blue_led;
-
 bool util_init_device();
 bool init_mqtt();
 bool init_sensors();

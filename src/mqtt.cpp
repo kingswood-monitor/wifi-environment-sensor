@@ -14,6 +14,8 @@
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
+Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
+
 char status_topic[MQTT_MAX_TOPIC_LENGTH];
 char command_topic[MQTT_MAX_TOPIC_LENGTH];
 
@@ -25,6 +27,9 @@ void publish_measurement_float(int location_id, int sensor_type, int sensor_id, 
 
 bool initialise_mqtt()
 {
+    // Info state
+    blue_led.begin();
+    blue_led.activeLow();
     Serial.print("INFO: Connecting to ");
     Serial.print(SSID_NAME);
     Serial.print("...");
@@ -33,15 +38,19 @@ bool initialise_mqtt()
     WiFi.begin(SSID_NAME, SSID_PASS);
     while (WiFi.status() != WL_CONNECTED)
     {
-        delay(500);
+        blue_led.toggle();
+        delay(300);
         Serial.print(".");
     }
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
 
     // Initialise MQTT client
     mqttClient.setServer(MQTT_SERVER_IP, 1883);
     mqttClient.setCallback(mqtt_callback);
+
+    // Info state
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+    blue_led.turnOn();
 
     return true;
 }
@@ -49,31 +58,6 @@ bool initialise_mqtt()
 /********************************************************
  * old code below
  */
-
-bool init_mqtt()
-{
-    init_wifi();
-    // mqttClient.setServer(MQTT_SERVER_IP, 1883);
-    // mqttClient.setCallback(mqtt_callback);
-    // return mqttClient.connected();
-}
-
-bool init_wifi()
-{
-    Serial.print("INFO: Connecting to ");
-    Serial.print(SSID_NAME);
-    Serial.print("...");
-
-    WiFi.begin(SSID_NAME, SSID_PASS);
-
-    while (WiFi.status() != WL_CONNECTED)
-        ;
-
-    // Serial.print(" IP: ");
-    // Serial.println(WiFi.localIP());
-
-    // blue_led.turnOn();
-}
 
 void reconnect_mqtt()
 {
