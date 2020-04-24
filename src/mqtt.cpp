@@ -15,11 +15,12 @@ WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
 Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
+Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
 
 char status_topic[MQTT_MAX_TOPIC_LENGTH];
 char command_topic[MQTT_MAX_TOPIC_LENGTH];
 
-bool init_wifi();
+// bool init_wifi();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 bool read_data(pb_istream_t *stream, const pb_field_iter_t *field, void **arg);
 void publish_status(int location_id, const char *topic, const char *data);
@@ -39,8 +40,8 @@ bool initialise_mqtt()
     while (WiFi.status() != WL_CONNECTED)
     {
         blue_led.toggle();
-        delay(300);
         Serial.print(".");
+        delay(500);
     }
 
     // Initialise MQTT client
@@ -95,8 +96,8 @@ void loop_mqtt()
 
 void mqtt_publish_measurement(uint8_t *buffer, uint8_t bytes_written)
 {
-    // red_led.begin();
-    // red_led.activeLow();
+    red_led.begin();
+    red_led.activeLow();
 
     Packet packet = Packet_init_zero;
 
@@ -109,7 +110,7 @@ void mqtt_publish_measurement(uint8_t *buffer, uint8_t bytes_written)
 
     publish_status(packet.meta.location_id, "firmware", packet.meta.firmware_version);
 
-    // red_led.blink(1, 200);
+    red_led.blink(1, 200);
 }
 
 bool read_data(pb_istream_t *stream, const pb_field_iter_t *field, void **arg)

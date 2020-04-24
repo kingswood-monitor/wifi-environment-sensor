@@ -27,9 +27,8 @@ void setup()
   if (!util_init_device())
     Serial.println("ERROR: Failed to initialise device");
 
-  initialise_mqtt();
-  // if (!init_mqtt())
-  //   Serial.println("ERROR: Failed to initialise WiFi");
+  if (!initialise_mqtt())
+    Serial.println("ERROR: Failed to initialise WiFi");
 }
 
 uint16_t packet_id = 0;
@@ -37,11 +36,11 @@ uint8_t packet_buffer[255];
 
 void loop()
 {
-  Serial.println("tick tock");
-  // loop_mqtt();
+  // Serial.println("tick tock");
+  loop_mqtt();
 
-  // uint8_t bytes_written = sensor_read(packet_id++, packet_buffer, 255);
-  // mqtt_publish_measurement(packet_buffer, bytes_written);
+  uint8_t bytes_written = sensor_read(packet_id++, packet_buffer, 255);
+  mqtt_publish_measurement(packet_buffer, bytes_written);
 
   delay(refresh_millis);
 }
