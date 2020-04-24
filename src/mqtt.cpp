@@ -9,7 +9,10 @@
 #include "secrets.h"
 
 #define MQTT_SERVER_IP IPAddress(192, 168, 1, 30)
+
 #define MQTT_MAX_TOPIC_LENGTH 50
+char status_topic[MQTT_MAX_TOPIC_LENGTH];
+char command_topic[MQTT_MAX_TOPIC_LENGTH];
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -17,10 +20,6 @@ PubSubClient mqttClient(espClient);
 Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
 Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
 
-char status_topic[MQTT_MAX_TOPIC_LENGTH];
-char command_topic[MQTT_MAX_TOPIC_LENGTH];
-
-// bool init_wifi();
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 bool read_data(pb_istream_t *stream, const pb_field_iter_t *field, void **arg);
 void publish_status(int location_id, const char *topic, const char *data);
@@ -56,25 +55,31 @@ bool initialise_mqtt()
     return true;
 }
 
-/********************************************************
- * old code below
- */
+void loop_mqtt()
+{
+    if (!mqttClient.connected())
+        reconnect_mqtt();
+    mqttClient.loop();
+}
 
 void reconnect_mqtt()
 {
     // Loop until we're reconnected
     while (!mqttClient.connected())
     {
-        // blue_led.toggle();
+        blue_led.begin();
+        blue_led.activeLow();
+        blue_led.turnOff();
+
         Serial.print("INFO: Connecting MQTT...");
         // Attempt to connect
-        if (mqttClient.connect("arduinoClient"))
+        if (mqttClient.connect(chip_id))
         {
             Serial.println("connected");
             // Once connected, publish an announcement...
-            // mqttClient.publish(status_topic, "ONLINE");
+            mqttClient.publish(status_topic, "ONLINE");
             // ... and resubscribe
-            // mqttClient.subscribe(command_topic);
+            mqttClient.subscribe(command_topic);
         }
         else
         {
@@ -83,21 +88,18 @@ void reconnect_mqtt()
             Serial.println(" try again in 5 seconds");
             // Wait 5 seconds before retrying
             delay(2000);
+            blue_led.toggle();
         }
     }
-}
 
-void loop_mqtt()
-{
-    if (!mqttClient.connected())
-        reconnect_mqtt();
-    mqttClient.loop();
+    blue_led.turnOn();
 }
 
 void mqtt_publish_measurement(uint8_t *buffer, uint8_t bytes_written)
 {
     red_led.begin();
     red_led.activeLow();
+    red_led.turnOn();
 
     Packet packet = Packet_init_zero;
 
@@ -110,7 +112,7 @@ void mqtt_publish_measurement(uint8_t *buffer, uint8_t bytes_written)
 
     publish_status(packet.meta.location_id, "firmware", packet.meta.firmware_version);
 
-    red_led.blink(1, 200);
+    red_led.turnOff();
 }
 
 bool read_data(pb_istream_t *stream, const pb_field_iter_t *field, void **arg)

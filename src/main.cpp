@@ -36,7 +36,6 @@ uint8_t packet_buffer[255];
 
 void loop()
 {
-  // Serial.println("tick tock");
   loop_mqtt();
 
   uint8_t bytes_written = sensor_read(packet_id++, packet_buffer, 255);
