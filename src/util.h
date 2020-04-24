@@ -4,14 +4,14 @@
 
 #include "config.h"
 
-extern Kingswood::Pin::DigitalOut red_led;
-extern Kingswood::Pin::DigitalOut blue_led;
-
 // ESP8266 chip ID
 extern char chip_id[8];
 
+// LEDS
+extern Kingswood::Pin::DigitalOut blue_led;
+
 bool util_init_device();
-bool mqtt_init();
+bool init_mqtt();
 bool init_sensors();
 
 void get_set_config();
