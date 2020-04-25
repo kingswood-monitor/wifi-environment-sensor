@@ -1,28 +1,37 @@
 #include <Arduino.h>
+
 #include "preferences.h"
 #include "packet.pb.h"
+
 #include "config.h"
 #include "util.h"
 
 KWPreferences preferences;
 
-uint16_t refresh_millis = CFG_REFRESH_MILLIS;
-Location location = CFG_LOCATION;
+Location location;
+uint16_t refresh_millis;
 
 Kingswood::Pin::DigitalOut util_red_led(RED_LED_PIN);
 
 char chip_id[8];
 
-bool util_init_device()
+void identify(int number);
+void get_set_config();
+void generate_chip_id();
+void rand_str(char *dest, size_t length);
+void display_logo(const char *firmware_name, const char *firmware_version);
+
+bool init_device()
 {
     Serial.begin(115200);
     delay(2000);
 
-    display_logo(FIRMWARE_NAME, FIRMWARE_VERSION, DEVICE_TYPE);
-
     get_set_config();
-    generate_chip_id();
+
     identify(location);
+    display_logo(FIRMWARE_NAME, FIRMWARE_VERSION);
+
+    generate_chip_id();
 
     return true;
 }
@@ -67,10 +76,10 @@ void generate_chip_id()
     sprintf(chip_id, "%08X\0", ESP.getChipId());
 }
 
-void display_logo(const char *title, const char *version, const char *type)
+void display_logo(const char *title, const char *version)
 {
     char strap_line[200];
-    sprintf(strap_line, "                  |___/  %s v%s on %s", title, version, type);
+    sprintf(strap_line, "                  |___/  %s v%s", title, version);
 
     Serial.println("  _  __ _                                                _ ");
     Serial.println(" | |/ /(_) _ __    __ _  ___ __      __ ___    ___    __| |");

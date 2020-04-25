@@ -5,14 +5,29 @@
 #include <pb_encode.h>
 #include "packet.pb.h"
 
-#include "util.h"
+#include "config.h"
 #include "sensor.h"
 
 SCD30 scd30;
 bool has_scd30 = false;
 
-bool send_data(Measurement *m, pb_ostream_t *ostream, const pb_field_iter_t *field);
-bool write_readings(pb_ostream_t *ostream, const pb_field_iter_t *field, void *const *arg);
+bool encode_measurement(pb_ostream_t *ostream, const pb_field_iter_t *field, void *const *arg);
+bool encode_field(Measurement *m, pb_ostream_t *ostream, const pb_field_iter_t *field);
+
+bool sensor_init()
+{
+    Wire.begin();
+    if (scd30.begin() == true)
+    {
+        has_scd30 = true;
+        scd30.setTemperatureOffset(SCD30_DEFAULT_TEMPERATURE_OFFSET);
+        scd30.setAmbientPressure(SCD30_DEFAULT_AMBIENT_PRESSURE);
+        scd30.setAutoSelfCalibration(true);
+        return true;
+    }
+    else
+        return false;
+}
 
 uint8_t sensor_read(int packet_id, uint8_t *buffer, uint8_t buffer_size)
 {
@@ -29,7 +44,7 @@ uint8_t sensor_read(int packet_id, uint8_t *buffer, uint8_t buffer_size)
     packet.packet_id = packet_id;
     packet.has_meta = true;
     packet.meta = META;
-    packet.measurements.funcs.encode = write_readings;
+    packet.measurements.funcs.encode = encode_measurement;
 
     // Encode the proto buffer
     pb_ostream_t ostream = pb_ostream_from_buffer(buffer, 100);
@@ -43,7 +58,7 @@ uint8_t sensor_read(int packet_id, uint8_t *buffer, uint8_t buffer_size)
     return ostream.bytes_written;
 }
 
-bool write_readings(pb_ostream_t *ostream, const pb_field_iter_t *field, void *const *arg)
+bool encode_measurement(pb_ostream_t *ostream, const pb_field_iter_t *field, void *const *arg)
 {
     Measurement measurement = Measurement_init_default;
 
@@ -56,7 +71,7 @@ bool write_readings(pb_ostream_t *ostream, const pb_field_iter_t *field, void *c
         Serial.print("T:");
         Serial.print(scd30.getTemperature());
         Serial.print(" ");
-        if (!send_data(&measurement, ostream, field))
+        if (!encode_field(&measurement, ostream, field))
             return false;
 
         measurement.which_type = Measurement_humidity_tag;
@@ -64,37 +79,22 @@ bool write_readings(pb_ostream_t *ostream, const pb_field_iter_t *field, void *c
         Serial.print("H:");
         Serial.print(scd30.getHumidity());
         Serial.print(" ");
-        if (!send_data(&measurement, ostream, field))
+        if (!encode_field(&measurement, ostream, field))
             return false;
 
         measurement.which_type = Measurement_co2_tag;
         measurement.type.co2 = scd30.getCO2();
         Serial.print("CO2:");
         Serial.println(scd30.getCO2());
-        if (!send_data(&measurement, ostream, field))
+        if (!encode_field(&measurement, ostream, field))
             return false;
     }
 
     return true;
 }
 
-bool send_data(Measurement *m, pb_ostream_t *ostream, const pb_field_iter_t *field)
+bool encode_field(Measurement *m, pb_ostream_t *ostream, const pb_field_iter_t *field)
 {
     return pb_encode_tag_for_field(ostream, field) &&
            pb_encode_submessage(ostream, Measurement_fields, m);
-}
-
-bool sensor_init()
-{
-    Wire.begin();
-    if (scd30.begin() == true)
-    {
-        has_scd30 = true;
-        scd30.setTemperatureOffset(SCD30_DEFAULT_TEMPERATURE_OFFSET);
-        scd30.setAmbientPressure(SCD30_DEFAULT_AMBIENT_PRESSURE);
-        scd30.setAutoSelfCalibration(true);
-        return true;
-    }
-    else
-        return false;
 }
