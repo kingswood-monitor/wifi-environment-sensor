@@ -13,7 +13,20 @@ Kingswood::Pin::DigitalOut util_red_led(RED_LED_PIN);
 
 char chip_id[8];
 
+bool util_init_device()
+{
+    Serial.begin(115200);
+    delay(2000);
+
+    display_logo(FIRMWARE_NAME, FIRMWARE_VERSION, DEVICE_TYPE);
+
+    get_set_config();
+    generate_chip_id();
     identify(location);
+
+    return true;
+}
+
 void get_set_config()
 {
 #ifdef WRITE_LOCATION_ID_TO_EEPROM
@@ -26,28 +39,32 @@ void get_set_config()
     Serial.println("INFO: Wrote settings to EEPROM");
     Serial.println("INFO: Remember to comment WRITE_LOCATION_ID_TO_EEPROM in util.h");
 #else
+
     location = (Location)preferences.getInt("LOCATION", CFG_LOCATION);
     refresh_millis = preferences.getInt("REFRESH_MILLIS", CFG_REFRESH_MILLIS);
 
-    Serial.println("INFO: Loaded settings from EEPROM");
+    Serial.println("INFO: Loaded configuration from EEPROM");
 #endif
-    Serial.print("      - LOCATION_ID: ");
-    Serial.print("      - REFRESH_MILLIS: ");
+    Serial.print("INFO: LOCATION_ID: ");
     Serial.println(location);
+    Serial.print("INFO: REFRESH_MILLIS: ");
     Serial.println(refresh_millis);
 }
 
-bool util_init_device()
+void identify(int number)
 {
-    Serial.begin(115200);
-    delay(2000);
+    util_red_led.begin();
+    util_red_led.activeLow();
+    util_red_led.turnOff();
+    delay(1000);
+    util_red_led.blink(number, 200);
+    util_red_led.turnOff();
+    delay(1000);
+}
 
-
-    get_set_config();
-    display_logo(FIRMWARE_NAME, FIRMWARE_VERSION, DEVICE_TYPE);
-    generate_chip_id();
-
-    return true;
+void generate_chip_id()
+{
+    sprintf(chip_id, "%08X\0", ESP.getChipId());
 }
 
 void display_logo(const char *title, const char *version, const char *type)
@@ -62,34 +79,4 @@ void display_logo(const char *title, const char *version, const char *type)
     Serial.println(" |_|\\_\\|_||_| |_| \\__, ||___/  \\_/\\_/  \\___/  \\___/  \\__,_|");
     Serial.println(strap_line);
     Serial.println();
-}
-
-void rand_str(char *dest, size_t length)
-{
-    char charset[] = "0123456789"
-                     "abcdefghijklmnopqrstuvwxyz"
-                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    while (length-- > 0)
-    {
-        size_t index = (double)rand() / RAND_MAX * (sizeof charset - 1);
-        *dest++ = charset[index];
-    }
-    *dest = '\0';
-}
-
-void generate_chip_id()
-{
-    sprintf(chip_id, "%08X\0", ESP.getChipId());
-}
-
-void identify(int number)
-{
-    util_red_led.begin();
-    util_red_led.activeLow();
-    util_red_led.turnOff();
-    delay(1000);
-    util_red_led.blink(number, 200);
-    util_red_led.turnOff();
-    delay(1000);
 }

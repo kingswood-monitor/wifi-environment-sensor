@@ -1,6 +1,7 @@
-/*************************************************
- * EEPROM configuration settings                */
 #include "packet.pb.h"
+
+/******************************************************************
+ * EEPROM configuration settings                                 */
 
 // Logical id to identify on network
 #define CFG_LOCATION Location_Bedroom // 4:living room, 5:bedroom
@@ -13,7 +14,7 @@
 extern Location location;
 extern uint16_t refresh_millis;
 
-/**************************************************/
+/*****************************************************************/
 
 // Firmware data
 #define FIRMWARE_NAME "WiFi Environment Sensor"

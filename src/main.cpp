@@ -10,7 +10,6 @@
 
 #include "config.h"
 #include "util.h"
-#include "mqtt.h"
 #include "socket.h"
 #include "sensor.h"
 
