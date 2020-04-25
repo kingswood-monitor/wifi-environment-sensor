@@ -1,7 +1,6 @@
 # Kingswood Environment Monitor environment sensor firmware
 
-This is the firmware for a sensor for measuring temperature, pressure, humidity, light
-and atmospheric pressure and, as a LoRa client, relaying it over a LoRa link to a LoRa server.
+This is the firmware for a sensor for measuring temperature, humidity, and CO2 an relaying it in a Protobuf message to a websocket.
 
 ## Protobuf
 
