@@ -5,12 +5,12 @@
 
 // Defaults
 // Logical id to identify on network
-#define CFG_LOCATION Location_Lounge // 4:living room, 5:bedroom
+#define CFG_LOCATION Location_bedroom // 4:living room, 5:bedroom
 // Default refresh millis
 #define CFG_REFRESH_MILLIS 2000
 
 // Uncomment the line below write the LOCATION_ID to EEPROM memory
-// #define WRITE_LOCATION_ID_TO_EEPROM
+#define WRITE_LOCATION_ID_TO_EEPROM
 
 extern Location location;
 extern uint16_t refresh_millis;
@@ -22,7 +22,7 @@ extern uint16_t refresh_millis;
 #define SERVER_PORT 1880
 
 // Sensor type
-#define SENSOR_TYPE SensorType_Environment
+#define SENSOR_TYPE SensorType_environment
 
 // Firmware data
 #define FIRMWARE_NAME "WiFi Environment Sensor"

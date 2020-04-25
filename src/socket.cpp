@@ -1,72 +1,117 @@
-
+#include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
-#include <WebSocketClient.h>
+#include "DigitalOut.h"
 
-#include "socket.h"
+#include "config.h"
+#include "secrets.h"
 
-const char *ssid = "Kingswood";
-const char *password = "wbtc0rar";
+Kingswood::Pin::DigitalOut blue_led(BLUE_LED_PIN);
+Kingswood::Pin::DigitalOut red_led(RED_LED_PIN);
 
-char path[] = "/";
-char host[] = "192.168.1.30";
+const char *ssid = SSID_NAME;                        //Enter SSID
+const char *password = SSID_PASS;                    //Enter Password
+const char *websockets_server_host = SERVER_HOST;    //Enter server adress
+const uint16_t websockets_server_port = SERVER_PORT; // Enter server port
 
-WebSocketClient webSocketClient;
+using namespace websockets;
+WebsocketsClient client;
 
-// Use WiFiClient class to create TCP connections
-WiFiClient client;
-
-void connect_websocket()
+void onMessageCallback(WebsocketsMessage message)
 {
+    Serial.print("Got Message: ");
+    Serial.println(message.data());
+}
 
-    // We start by connecting to a WiFi network
+void onEventsCallback(WebsocketsEvent event, String data)
+{
+    if (event == WebsocketsEvent::ConnectionOpened)
+    {
+        red_led.turnOff();
+        Serial.println("INFO: Connnection Opened");
+    }
 
-    Serial.println();
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
+    else if (event == WebsocketsEvent::ConnectionClosed)
+    {
+        red_led.turnOn();
+        Serial.println("INFO: Connnection Closed");
+        client.connect(websockets_server_host, websockets_server_port, "/");
+    }
 
+    else if (event == WebsocketsEvent::GotPing)
+    {
+        Serial.println("INFO: Got a Ping!");
+    }
+
+    else if (event == WebsocketsEvent::GotPong)
+    {
+        Serial.println("INFO: Got a Pong!");
+    }
+}
+
+bool init_socket()
+{
+    red_led.begin();
+    red_led.activeLow();
+    red_led.turnOn();
+
+    blue_led.begin();
+    blue_led.activeLow();
+    blue_led.turnOff();
+
+    // Connect to wifi
+    Serial.print("INFO: Connecting to WiFi");
     WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED)
+    // Wait some time to connect to wifi
+    for (int i = 0; i < 10 && WiFi.status() != WL_CONNECTED; i++)
     {
-        delay(500);
         Serial.print(".");
+        delay(1000);
+        blue_led.toggle();
     }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
+    blue_led.turnOn();
+    Serial.print("Connected, IP: ");
     Serial.println(WiFi.localIP());
 
-    delay(5000);
+    // run callback when messages are received
+    client.onMessage(onMessageCallback);
 
-    // Connect to the websocket server
-    if (client.connect(host, 1880))
+    // run callback when events are occuring
+    client.onEvent(onEventsCallback);
+
+    // Connect to server
+    Serial.print("INFO: Connecting to websocket");
+    while (!client.available())
     {
-        Serial.println("Connected");
+        client.connect(websockets_server_host, websockets_server_port, "/");
+        Serial.print(".");
+        delay(1000);
     }
-    else
+    Serial.println();
+
+    // Send a message
+    client.send("Hello Server");
+
+    // Send a ping
+    client.ping();
+
+    return client.available();
+}
+
+void socket_send_measurement(const uint8_t *data, const size_t len)
+{
+    while (!client.available())
     {
-        Serial.println("Connection failed.");
-        while (1)
-        {
-            // Hang on failure
-        }
+        red_led.toggle();
+        client.connect(websockets_server_host, websockets_server_port, "/");
+        delay(1000);
     }
 
-    // Handshake with the server
-    webSocketClient.path = path;
-    webSocketClient.host = host;
-    if (webSocketClient.handshake(client))
-    {
-        Serial.println("Handshake successful");
-    }
-    else
-    {
-        Serial.println("Handshake failed.");
-        while (1)
-        {
-            // Hang on failure
-        }
-    }
+    client.sendBinary((char *)data, len);
+    red_led.blink(1, 150);
+}
+
+void loop_socket()
+{
+    client.poll();
 }

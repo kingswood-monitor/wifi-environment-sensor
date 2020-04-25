@@ -24,13 +24,16 @@ void setup()
     while (1)
       ;
   }
-  if (!util_init_device())
+
+  if (!init_device())
     Serial.println("ERROR: Failed to initialise device");
 
-  // if (!initialise_mqtt())
-  //   Serial.println("ERROR: Failed to initialise WiFi");
-
-  connect_websocket();
+  if (!init_socket())
+  {
+    Serial.println("ERROR: Failed to connect socket. Freezing...");
+    while (1)
+      ;
+  }
 }
 
 uint16_t packet_id = 0;
@@ -38,10 +41,10 @@ uint8_t packet_buffer[255];
 
 void loop()
 {
-  // loop_mqtt();
+  loop_socket();
 
   uint8_t bytes_written = sensor_read(packet_id++, packet_buffer, 255);
-  // mqtt_publish_measurement(packet_buffer, bytes_written);
+  socket_send_measurement(packet_buffer, bytes_written);
 
   delay(refresh_millis);
 }
