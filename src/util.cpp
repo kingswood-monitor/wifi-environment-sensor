@@ -1,37 +1,39 @@
 #include <Arduino.h>
 #include "preferences.h"
+#include "packet.pb.h"
 #include "config.h"
 #include "util.h"
 
 KWPreferences preferences;
 
 uint16_t refresh_millis = CFG_REFRESH_MILLIS;
-uint8_t location_id = CFG_LOCATION_ID;
+Location location = CFG_LOCATION;
 
 Kingswood::Pin::DigitalOut util_red_led(RED_LED_PIN);
 
 char chip_id[8];
 
+    identify(location);
 void get_set_config()
 {
 #ifdef WRITE_LOCATION_ID_TO_EEPROM
-    preferences.putInt("LOCATION_ID", CFG_LOCATION_ID);
+    preferences.putInt("LOCATION", (int)CFG_LOCATION);
     preferences.putInt("REFRESH_MILLIS", CFG_REFRESH_MILLIS);
 
-    location_id = CFG_LOCATION_ID;
+    location = CFG_LOCATION;
     refresh_millis = CFG_REFRESH_MILLIS;
 
     Serial.println("INFO: Wrote settings to EEPROM");
     Serial.println("INFO: Remember to comment WRITE_LOCATION_ID_TO_EEPROM in util.h");
 #else
-    location_id = preferences.getInt("LOCATION_ID", CFG_LOCATION_ID);
+    location = (Location)preferences.getInt("LOCATION", CFG_LOCATION);
     refresh_millis = preferences.getInt("REFRESH_MILLIS", CFG_REFRESH_MILLIS);
 
     Serial.println("INFO: Loaded settings from EEPROM");
 #endif
     Serial.print("      - LOCATION_ID: ");
-    Serial.println(location_id);
     Serial.print("      - REFRESH_MILLIS: ");
+    Serial.println(location);
     Serial.println(refresh_millis);
 }
 
@@ -40,7 +42,6 @@ bool util_init_device()
     Serial.begin(115200);
     delay(2000);
 
-    identify(location_id);
 
     get_set_config();
     display_logo(FIRMWARE_NAME, FIRMWARE_VERSION, DEVICE_TYPE);

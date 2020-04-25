@@ -1,15 +1,16 @@
 /*************************************************
  * EEPROM configuration settings                */
+#include "packet.pb.h"
 
 // Logical id to identify on network
-#define CFG_LOCATION_ID 5 // 4:living room, 5:bedroom
+#define CFG_LOCATION Location_Bedroom // 4:living room, 5:bedroom
 // Default refresh millis
 #define CFG_REFRESH_MILLIS 2000
 
 // Uncomment to write the LOCATION_ID to EEPROM memory
 // #define WRITE_LOCATION_ID_TO_EEPROM
 
-extern uint8_t location_id;
+extern Location location;
 extern uint16_t refresh_millis;
 
 /**************************************************/

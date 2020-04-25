@@ -17,7 +17,7 @@ bool write_readings(pb_ostream_t *ostream, const pb_field_iter_t *field, void *c
 uint8_t sensor_read(int packet_id, uint8_t *buffer, uint8_t buffer_size)
 {
     Meta META = {
-        location_id : location_id,
+        location : location,
         sensor_type : SENSOR_TYPE,
         firmware_version : FIRMWARE_VERSION,
     };
