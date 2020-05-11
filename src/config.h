@@ -24,6 +24,10 @@ extern uint16_t refresh_millis;
 // Sensor type
 #define SENSOR_TYPE SensorType_environment
 
+// Sensors
+#define HAS_SCD30
+// #define HAS_BMP388
+
 // Firmware data
 #define FIRMWARE_NAME "WiFi Environment Sensor"
 #define FIRMWARE_VERSION "0.1.0"

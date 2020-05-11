@@ -8,8 +8,12 @@
 #include "config.h"
 #include "sensor.h"
 
+float last_bmp388_temperature = SENTINEL_TEMPERATURE;
 SCD30 scd30;
+DFRobot_BMP388_I2C bmp388;
+
 bool has_scd30 = false;
+bool has_bmp388 = false;
 
 bool encode_measurement(pb_ostream_t *ostream, const pb_field_iter_t *field, void *const *arg);
 bool encode_field(Measurement *m, pb_ostream_t *ostream, const pb_field_iter_t *field);
@@ -26,7 +30,12 @@ bool sensor_init()
         return true;
     }
     else
-        return false;
+
+#ifdef HAS_BMP388
+    bmp388.begin();
+    has_bmp388 = (!((bmp388.readTemperature() == 0) & (bmp388.readPressure() == 0)));
+#endif
+
 }
 
 uint8_t sensor_read(int packet_id, uint8_t *buffer, uint8_t buffer_size)
@@ -90,6 +99,44 @@ bool encode_measurement(pb_ostream_t *ostream, const pb_field_iter_t *field, voi
             return false;
     }
 
+    if (has_bmp388)
+    {
+        measurement.sensor = Sensor_BMP388;
+
+        // pressure
+        float current_pressure = bmp388.readPressure() / 100;
+
+        if (abs(current_pressure - last_pressure) >= DELTA_PRESSURE)
+        {
+            last_pressure = current_pressure;
+
+            measurement.type.pressure = current_pressure;
+            measurement.which_type = Measurement_pressure_tag;
+
+            Serial.print("P:");
+            Serial.print(current_pressure);
+            Serial.print(" ");
+
+            if (!encode_field(&measurement, ostream, field))
+                return false;
+        }
+
+        // temperature
+        float current_bmp388_temperature = bmp388.readTemperature();
+        if (abs(current_bmp388_temperature - last_bmp388_temperature) >= DELTA_TEMPERATURE)
+        {
+            last_bmp388_temperature = current_bmp388_temperature;
+
+            measurement.type.temperature = current_bmp388_temperature;
+            measurement.which_type = Measurement_temperature_tag;
+
+            Serial.print("T:");
+            Serial.print(current_bmp388_temperature);
+
+            if (!encode_field(&measurement, ostream, field))
+                return false;
+        }
+    }
     return true;
 }
 
