@@ -6,10 +6,12 @@
 #include "config.h"
 #include "util.h"
 
+#include "DigitalOut.h"
+
 KWPreferences preferences;
 
 Location location;
-uint16_t refresh_millis;
+uint16_t refresh_secs;
 
 Kingswood::Pin::DigitalOut util_red_led(RED_LED_PIN);
 
@@ -40,24 +42,24 @@ void get_set_config()
 {
 #ifdef WRITE_LOCATION_ID_TO_EEPROM
     preferences.putInt("LOCATION", (int)CFG_LOCATION);
-    preferences.putInt("REFRESH_MILLIS", CFG_REFRESH_MILLIS);
+    preferences.putInt("REFRESH_SECS", CFG_REFRESH_SECS);
 
     location = CFG_LOCATION;
-    refresh_millis = CFG_REFRESH_MILLIS;
+    refresh_secs = CFG_REFRESH_SECS;
 
     Serial.println("INFO: Wrote settings to EEPROM");
     Serial.println("INFO: Remember to comment WRITE_LOCATION_ID_TO_EEPROM in util.h");
 #else
 
     location = (Location)preferences.getInt("LOCATION", CFG_LOCATION);
-    refresh_millis = preferences.getInt("REFRESH_MILLIS", CFG_REFRESH_MILLIS);
+    refresh_secs = preferences.getInt("REFRESH_SECS", CFG_REFRESH_SECS);
 
     Serial.println("INFO: Loaded configuration from EEPROM");
 #endif
     Serial.print("INFO: LOCATION_ID: ");
     Serial.println(location);
-    Serial.print("INFO: REFRESH_MILLIS: ");
-    Serial.println(refresh_millis);
+    Serial.print("INFO: REFRESH_SECS: ");
+    Serial.println(refresh_secs);
 }
 
 void identify(int number)
@@ -88,4 +90,10 @@ void display_logo(const char *title, const char *version)
     Serial.println(" |_|\\_\\|_||_| |_| \\__, ||___/  \\_/\\_/  \\___/  \\___/  \\__,_|");
     Serial.println(strap_line);
     Serial.println();
+}
+
+float dew_point(float temp_c, float rel_hum)
+{
+    float ans = (temp_c - (14.55 + 0.114 * temp_c) * (1 - (0.01 * rel_hum)) - pow(((2.5 + 0.007 * temp_c) * (1 - (0.01 * rel_hum))), 3) - (15.9 + 0.117 * temp_c) * pow((1 - (0.01 * rel_hum)), 14));
+    return ans;
 }
